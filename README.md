@@ -30,6 +30,7 @@ From the repository root:
 python code/main.py                       # all 518 cases -> ./output.csv (prints contract checks and model usage)
 python code/evaluation/main.py            # predict + score the 32 public samples
 python code/evaluation/custom_cases.py    # participant-made evaluation cases (offline)
+python code/evaluation/validate_output.py # independent contract check of ./output.csv
 ```
 
 Options for `code/main.py`:

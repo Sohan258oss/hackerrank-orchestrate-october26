@@ -56,3 +56,19 @@ Listed for transparency. These calls did not produce `output.csv`.
 All of these ran on free tiers ($0.00). Nemotron was replaced by Gemini after scoring 39/41 against
 Gemini's 41/41 on hand-checked screenshot fields. Nemotron also spent most of its output tokens on
 reasoning, as the token counts show.
+
+## Clean-cache verification run (cloud container, no API key)
+
+`.cache/` was removed and `python3 code/main.py` rerun over all 518 cases, writing to a separate file
+so the submitted `output.csv` was not overwritten:
+
+| Provider / model | Prompt | Live calls | Cache hits | Input tokens | Output tokens |
+|---|---|---|---|---|---|
+| gemini / gemini-3.8-flash | image_extraction | 0 (11 screenshots skipped, no key) | 0 | 0 | 0 |
+| gemini / gemini-3.8-flash | intent_classifier | 0 (all 518 texts decided by rules) | 0 | 0 | 0 |
+| **Total** | | **0** | **0** | **0** | **0** |
+
+- Wall time 2.2 s; 83 non-image files were parsed locally into 2,903 records. Cost: $0.00.
+- Result: 158 COMPLETE, 350 INCOMPLETE, 10 NOT_APPLICABLE, and 0 contract violations
+  (`python code/evaluation/validate_output.py`). It differs from the submitted `output.csv` only in
+  the 8 screenshot-dependent cases listed in `evaluation_report.md` §3.4.
