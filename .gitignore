@@ -1,0 +1,14 @@
+# Secrets: API keys live only in the environment or this file.
+.env
+
+# Extraction cache, LLM usage log, generated records
+.cache/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Submission archives
+*.zip
