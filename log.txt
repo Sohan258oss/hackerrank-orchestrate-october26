@@ -622,3 +622,26 @@ branch=main-y99994
 repo_root=/home/user/hackerrank-orchestrate-october26
 worktree=main
 parent_agent=none
+
+## [2026-10-24T18:27:04Z] Rewrite evaluation and usage reports with all numbers inline
+
+User Prompt (verbatim, secrets redacted):
+Write code/evaluation/evaluation_report.md with all numbers inline: case status accuracy, step-level and field-level accuracy, sequence accuracy, the custom cases and their results, the vision model comparison, and the failures and improvements drawn from iterations.md.
+Write code/evaluation/usage_report.md for the final full run only, from the usage log: providers and models (Gemini plus the OCR/vision models), call counts, input and output tokens, total and average tokens per request (over 518), and estimated total and per-request cost (free-tier $0, plus the equivalent paid-tier price), with per-model and overall totals.
+
+Agent Response Summary:
+Rewrote evaluation_report.md from a fresh sample scoring run: status 32/32 (10 COMPLETE, 22 INCOMPLETE); steps 185 matched of 190 predicted and 193 gold (P 97.4%, R 95.9%, F1 96.6%); each field 185/193 (95.9%); sequence 23/32 (71.9%). It also covers validator results on output.csv (0 violations; the citation count corrected to 1,205), the 18/18 custom cases, a vision comparison table (Gemini 41/41 vs Nemotron 36 -> 40 -> 39/41; Llama timed out; Pro models hit 429) and the iterations with before/after scores. Rewrote usage_report.md for the final run only. .cache/llm_usage.jsonl is not in the cloud container, so token figures come from the run summaries recorded in log.txt and are marked approximate: 12 gemini-3.8-flash calls, ~24.6k input / ~6.7k output, ~60.4 tokens per request. Cost is $0 on the free tier; the paid equivalent is $0.0436 ($0.000084 per request) at the introductory $0.75/$3.75 per 1M rate, or $0.0872 at the $1.50/$7.50 rate from 2027. These rates are from third-party listings found by web search and need checking against Google's pricing page.
+
+Actions:
+* python code/evaluation/main.py; computed exact step and field counts and the citation count
+* WebSearch for gemini-3.8-flash pricing
+* Rewrote code/evaluation/evaluation_report.md and code/evaluation/usage_report.md; rebuilt code.zip
+* git commit; git push origin main-y99994
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=main-y99994
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=none

@@ -1,74 +1,70 @@
-# Usage report
+# Usage report: final full-dataset run
 
-The pipeline is mostly deterministic. Models are used in exactly two places, and both are cached
-by content hash:
+This report covers only the run that produced the submitted `output.csv`: `python code/main.py` over
+all 518 evaluation cases. Development and model-comparison calls are excluded; the vision comparison
+is in `evaluation_report.md` §3.
 
-| Use | Provider | Model | When it is called |
+## Models and OCR in the pipeline
+
+| Stage | Provider | Model / engine | Use in the final run |
 |---|---|---|---|
-| Screenshot extraction (vision, strict JSON) | Google Gemini, OpenAI-compatible endpoint | `gemini-3.8-flash` | once per screenshot, or for a PDF page with no text layer |
-| Request-intent fallback (text, batched by 20) | Google Gemini | `gemini-3.8-flash` | only for request texts the multilingual rules cannot decide |
+| Screenshot OCR + extraction (vision, strict JSON) | Google Gemini (OpenAI-compatible endpoint) | `gemini-3.8-flash` | 11 application screenshots |
+| Image-only PDF pages (vision fallback) | Google Gemini | `gemini-3.8-flash` | not needed: every PDF has a text layer |
+| PDF text extraction (OCR-free text layer) | local library | `pdfplumber` 0.11 | all PDFs; no tokens, no cost |
+| Request-intent fallback (text) | Google Gemini | `gemini-3.8-flash` | not needed: rules decided all 518 requests |
+| Vision fallback provider | NVIDIA NIM | `nvidia/nemotron-3.5-super-vl-120b-a12b` | not used; selectable via `VISION_PROVIDER=nvidia` |
 
-Every call and every cache hit is logged with provider, model, prompt name, and input/output tokens
-to `.cache/llm_usage.jsonl`. `code/main.py` prints a per-model summary for the run at the end.
+SQL snapshots, JSON, logs and text records are parsed locally without any model.
 
-## Final full-dataset run (the one that wrote `output.csv`)
+## Source of the numbers
 
-`python code/main.py` over all 518 evaluation cases:
+Every model call and cache hit is written to the usage log `.cache/llm_usage.jsonl` with provider,
+model, prompt name, run id, and input and output tokens. `code/main.py` prints the per-model totals at
+the end of each run. `.cache/` is git-ignored, so the figures below are copied from the run summaries
+recorded in the chat transcript (`log.txt`). Token counts there were rounded to the nearest hundred and
+are marked `~`.
 
-| Provider / model | Prompt | Live calls | Cache hits | Input tokens | Output tokens |
-|---|---|---|---|---|---|
-| gemini / gemini-3.8-flash | image_extraction | 0 | 11 | 0 | 0 |
-| gemini / gemini-3.8-flash | intent_classifier | 0 | 0 | 0 | 0 |
-| **Total** | | **0** | **11** | **0** | **0** |
+The final run read all 11 screenshot results from the content-hash cache, so the run itself made 0 new
+calls. Its model usage is the 12 Gemini calls that produced those cached results; a fresh clone with
+a key repeats them once on its first run. Those calls are the totals below.
 
-- All 11 screenshots came from the extraction cache built in the run below; the other 83 evidence
-  files are parsed locally (SQLite, JSON, log and text parsers, `pdfplumber`).
-- All 518 request texts were decided by the rules, so the intent fallback made no calls.
-- Total tokens: 0, average 0 per request. Cost: **$0.00** total and per request.
+## Per-model and overall totals
 
-## Cold-start cost (building the cache the final run used)
+| Provider | Model | Prompt | Calls | Input tokens | Output tokens | Total tokens |
+|---|---|---|---|---|---|---|
+| Google | `gemini-3.8-flash` | `image_extraction` (11 screenshots) | 12 | ~24,600 | ~6,700 | ~31,300 |
+| Google | `gemini-3.8-flash` | `pdf_page_extraction` | 0 | 0 | 0 | 0 |
+| Google | `gemini-3.8-flash` | `intent_classifier` | 0 | 0 | 0 | 0 |
+| **Google** | **`gemini-3.8-flash` total** | | **12** | **~24,600** | **~6,700** | **~31,300** |
+| NVIDIA | `nemotron-3.5-super-vl-120b-a12b` | fallback (unused) | 0 | 0 | 0 | 0 |
+| local | `pdfplumber` | PDF text layer | n/a | 0 | 0 | 0 |
+| **Overall** | | | **12** | **~24,600** | **~6,700** | **~31,300** |
 
-These are the calls that produced the cached screenshot results. Any fresh clone with
-`GEMINI_API_KEY` set repeats them once on its first run.
+## Per-request averages (÷ 518 requests)
 
-| Provider / model | Prompt | Calls | Input tokens | Output tokens | Total tokens |
-|---|---|---|---|---|---|
-| gemini / gemini-3.8-flash | image_extraction (11 screenshots) | 12 | ~24,600 | ~6,700 | ~31,300 |
-| gemini / gemini-3.8-flash | intent_classifier | 0 | 0 | 0 | 0 |
-| **Total** | | **12** | **~24,600** | **~6,700** | **~31,300** |
+| | Input | Output | Total |
+|---|---|---|---|
+| Tokens per request | ~47.5 | ~12.9 | **~60.4** |
+| Model calls per request | | | 0.023 |
 
-- Average per evaluation request: ~31,300 / 518 ≈ **60 tokens** (≈ 47 input + 13 output).
-- Wall time: about 28 minutes (median ~187 s per screenshot on the free tier).
-- Cost: **$0.00**. Every call ran on the Gemini API free tier, so no charge was incurred, and per-request
-  cost is $0.00. At paid rates, cost scales linearly with the ~31k tokens above.
+Almost all tokens go to the 11 screenshots (about 2,850 tokens each). The other cases need no model
+call at all.
 
-## Development-only calls (not part of the submission run)
+## Cost
 
-Listed for transparency. These calls did not produce `output.csv`.
+Actual cost: **$0.00**. All calls ran on the Gemini API free tier.
 
-| Purpose | Provider / model | Calls | Input tokens | Output tokens |
-|---|---|---|---|---|
-| Vision model comparison, run 1 | nvidia / nemotron-3.5-super-vl-120b-a12b | 14 | ~28,600 | ~45,600 |
-| Vision model comparison, run 2 | nvidia / nemotron-3.5-super-vl-120b-a12b | 13 | ~30,800 | ~51,700 |
-| Intent fallback test on 5 synthetic texts | gemini / gemini-3.8-flash | 1 | 734 | 362 |
-| Timed-out attempts (llama-3.2-90b-vision) | nvidia / meta/llama-3.2-90b-vision-instruct | 3 | 0 | 0 |
+Equivalent paid-tier cost for `gemini-3.8-flash`, standard tier. The rates come from third-party price
+listings checked in October 2026 (for example pricepertoken.com and eesel.ai), so confirm them on
+Google's pricing page.
 
-All of these ran on free tiers ($0.00). Nemotron was replaced by Gemini after scoring 39/41 against
-Gemini's 41/41 on hand-checked screenshot fields. Nemotron also spent most of its output tokens on
-reasoning, as the token counts show.
+| Price basis | Input $/1M | Output $/1M | Input cost | Output cost | **Total** | **Per request** |
+|---|---|---|---|---|---|---|
+| Free tier (used) | 0 | 0 | $0.00 | $0.00 | **$0.00** | **$0.00** |
+| Paid, introductory rate (to 2026-12-31) | 0.75 | 3.75 | $0.0185 | $0.0251 | **$0.0436** | **$0.000084** |
+| Paid, rate from 2027-01-01 | 1.50 | 7.50 | $0.0369 | $0.0503 | **$0.0872** | **$0.000168** |
 
-## Clean-cache verification run (cloud container, no API key)
+Per-model cost: all of it is `gemini-3.8-flash`. Nemotron (unused) and `pdfplumber` (local) cost $0.
 
-`.cache/` was removed and `python3 code/main.py` rerun over all 518 cases, writing to a separate file
-so the submitted `output.csv` was not overwritten:
-
-| Provider / model | Prompt | Live calls | Cache hits | Input tokens | Output tokens |
-|---|---|---|---|---|---|
-| gemini / gemini-3.8-flash | image_extraction | 0 (11 screenshots skipped, no key) | 0 | 0 | 0 |
-| gemini / gemini-3.8-flash | intent_classifier | 0 (all 518 texts decided by rules) | 0 | 0 | 0 |
-| **Total** | | **0** | **0** | **0** | **0** |
-
-- Wall time 2.2 s; 83 non-image files were parsed locally into 2,903 records. Cost: $0.00.
-- Result: 158 COMPLETE, 350 INCOMPLETE, 10 NOT_APPLICABLE, and 0 contract violations
-  (`python code/evaluation/validate_output.py`). It differs from the submitted `output.csv` only in
-  the 8 screenshot-dependent cases listed in `evaluation_report.md` §3.4.
+Time: the 12 vision calls took about 28 minutes on the free tier (median ~187 s per screenshot). With a
+warm cache the full 518-case run takes about 1-2 seconds.
