@@ -753,3 +753,22 @@ branch=main-y99994
 repo_root=/home/user/hackerrank-orchestrate-october26
 worktree=main
 parent_agent=none
+
+## [2026-10-24T18:34:45Z] Explain the 23/32 sequence-accuracy figure
+
+User Prompt (verbatim, secrets redacted):
+what is the 23/32 thing?
+
+Agent Response Summary:
+Explained that 23/32 is sequence accuracy on the 32 public sample cases: in 23 of them the predicted steps_json array is identical to the published answer, with every step, field and position matching. In the other 9 the status is still correct, but one step is missing or extra. It is the strictest measure; the step-level score (185 of 193 steps) gives partial credit.
+
+Actions:
+* None beyond this log entry; git commit; git push
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=main-y99994
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=none
