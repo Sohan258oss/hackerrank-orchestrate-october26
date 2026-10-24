@@ -797,3 +797,29 @@ branch=main-y99994
 repo_root=/home/user/hackerrank-orchestrate-october26
 worktree=main
 parent_agent=none
+
+## [2026-10-24T18:41:53Z] Is output.csv correct and is this the best result?
+
+User Prompt (verbatim, secrets redacted):
+and the output.csv is also correct and this is the best result we could get or should we try something else?
+
+Agent Response Summary:
+output.csv is valid: 0 contract violations; statuses 151 COMPLETE, 357 INCOMPLETE, 10 NOT_APPLICABLE. Sample tuning has plateaued, and the remaining sample misses are unreachable ids or tied anonymized rows. One more check found a likely gap in the evaluation set. 12 planted LINK_RESOURCE_IDENTITY activities each tie one resource to a case. Nine are reflected in output.csv; cases 55, 61 and 63 are COMPLETE with that resource missing. Viewing the screenshots directly:
+- Case 63: evidence_60 shows marketing_001 belonging to a different person (Soo-jin Park, sj.park@naver.com, not user_09). The catalog link is likely a decoy, so COMPLETE may be right.
+- Case 55: evidence_32 (captured 2026-04-29, before audit_at) shows backup_9287 for areed1433@gmail.com as a healthy restorable archive with no restore block. A later activity shows that backup repopulating search_4882. The policy stage only treats a backup as a restore risk when its state is ACTIVE, so a backup seen only as PRESENT produces no step; this is likely a missed REPORT_RESTORE_RISK.
+- Case 61: evidence_46 (2026-02-13, before audit_at) shows delivery_confirmation_19.pdf (object_19, a support attachment) still stored; this is likely a missed REPORT_REMAINING_RECORD.
+Neither fix can be verified or written into output.csv here, because the Gemini screenshot cache and API key are only on the user's laptop. Recommended the user either add GEMINI_API_KEY to this environment (about 25-30 minute re-extraction) or accept the current output; the expected gain is about 2 of 518 cases.
+
+Actions:
+* python3 code/evaluation/validate_output.py (0 violations)
+* Mapped the 12 LINK_RESOURCE_IDENTITY activities to cases and output rows
+* Viewed evidence_32, evidence_46 and evidence_60; checked user_identities for the marketing profile owner
+* Read backup state normalization (extract/common.py) and the policy treatment (engine/policy.py)
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=main-y99994
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=none
